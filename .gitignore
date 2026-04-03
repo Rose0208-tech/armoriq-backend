@@ -1,0 +1,9 @@
+backend/.env
+.env
+*.env
+backend/audit.db
+backend/output/
+__pycache__/
+*.pyc
+venv/
+.venv/

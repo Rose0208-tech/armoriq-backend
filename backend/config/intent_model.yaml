@@ -1,0 +1,46 @@
+# ============================================================
+# Intent Model — config/intent_model.yaml
+#
+# This file defines WHAT the user has authorised the agent
+# to do. The enforcement layer validates every planned action
+# against this contract before allowing it to execute.
+# ============================================================
+
+intent:
+  id: intent-stock-analysis-v1
+  description: >
+    Analyze equities and place paper trades within defined limits.
+    The agent may query market data, run fundamental analysis,
+    write reports, and execute orders — only for the listed tickers
+    and within the declared directory scope.
+
+  # Goals the agent is explicitly authorised to pursue.
+  # Any action whose goal is NOT in this list is blocked.
+  authorized_goals:
+    - MARKET_DATA_QUERY       # fetch quotes, OHLCV, fundamentals
+    - FUNDAMENTAL_ANALYSIS    # compute ratios, compare metrics
+    - PAPER_TRADE_EXECUTION   # place/cancel orders via Alpaca paper
+    - REPORT_WRITE            # write analysis files to output/
+
+  # Resource scope
+  scope:
+    tickers:
+      - "NVDA"
+      - "AAPL"
+      - "MSFT"
+      - "GOOGL"
+      - "AMZN"
+
+    asset_classes:
+      - "equity"
+
+    data_directories:
+      read:
+        - "data/market/"
+        - "data/reports/"
+      write:
+        - "output/reports/"
+
+  # If a sub-agent is delegated authority, record its ID here.
+  # null = no delegation active.
+  delegated_to: null

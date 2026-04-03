@@ -1,0 +1,96 @@
+# ============================================================
+# Policy Model — config/policy_model.yaml
+#
+# Each rule has a unique ID so enforcement decisions can be
+# traced to the exact clause that was triggered.
+# on_violation: BLOCK = hard stop (no exceptions).
+# ============================================================
+
+policy:
+  id: policy-financial-agent-v1
+
+  rules:
+
+    # ---- RULE-001: Ticker Whitelist -------------------------
+    - id: RULE-001
+      name: ticker_whitelist
+      type: asset_restriction
+      description: >
+        Only pre-approved tickers may be queried or traded.
+        Any action referencing an unlisted symbol is blocked.
+      enforce_on: [TRADE_BUY, TRADE_SELL, MARKET_DATA_QUERY]
+      params:
+        allowed_tickers: ["NVDA", "AAPL", "MSFT", "GOOGL", "AMZN"]
+      on_violation: BLOCK
+
+    # ---- RULE-002: Per-Order Size Limit --------------------
+    - id: RULE-002
+      name: per_order_size_limit
+      type: trade_size
+      description: >
+        A single order must not exceed 100 shares.
+        Prevents outsized positions from a single instruction.
+      enforce_on: [TRADE_BUY, TRADE_SELL]
+      params:
+        max_qty: 100
+      on_violation: BLOCK
+
+    # ---- RULE-003: Daily Aggregate Notional Limit ----------
+    - id: RULE-003
+      name: daily_aggregate_limit
+      type: daily_exposure
+      description: >
+        Total notional value of BUY orders in a calendar day
+        must not exceed $10,000 USD.
+      enforce_on: [TRADE_BUY]
+      params:
+        max_daily_notional_usd: 10000
+      on_violation: BLOCK
+
+    # ---- RULE-004: Market Hours Gate -----------------------
+    - id: RULE-004
+      name: market_hours_only
+      type: time_restriction
+      description: >
+        No trades may be placed outside NYSE regular session
+        (09:30–16:00 ET = 13:30–20:00 UTC, Mon–Fri).
+      enforce_on: [TRADE_BUY, TRADE_SELL]
+      params:
+        allowed_hours_utc:
+          open: "13:30"
+          close: "20:00"
+        allowed_days: ["MON", "TUE", "WED", "THU", "FRI"]
+      on_violation: BLOCK
+
+    # ---- RULE-005: Credential File Block -------------------
+    - id: RULE-005
+      name: no_credential_access
+      type: file_access
+      description: >
+        The agent must never read files that might contain
+        credentials, API keys, certificates, or secrets.
+      enforce_on: [FILE_READ]
+      params:
+        blocked_patterns:
+          - ".env"
+          - "*.key"
+          - "*.pem"
+          - "credentials*"
+          - "secrets*"
+          - "*.secret"
+      on_violation: BLOCK
+
+    # ---- RULE-006: No External Data Exfiltration -----------
+    - id: RULE-006
+      name: no_external_data_upload
+      type: network_restriction
+      description: >
+        Portfolio data and analysis may only be POSTed/PUT to
+        Alpaca's official endpoints. All other hosts are blocked.
+      enforce_on: [HTTP_POST, HTTP_PUT]
+      params:
+        approved_hosts:
+          - "paper-api.alpaca.markets"
+          - "data.alpaca.markets"
+          - "api.alpaca.markets"
+      on_violation: BLOCK
