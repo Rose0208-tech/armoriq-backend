@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: armoriq-backend
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ALPACA_API_KEY
+        sync: false
+      - key: ALPACA_SECRET_KEY
+        sync: false
+      - key: ALPACA_BASE_URL
+        value: https://paper-api.alpaca.markets
+      - key: ARMORIQ_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: POLICY_FILE
+        value: config/policy_model.yaml
+      - key: INTENT_FILE
+        value: config/intent_model.yaml
+      - key: AUDIT_DB
+        value: audit.db
+      - key: OUTPUT_DIR
+        value: output/reports/
